@@ -1,6 +1,10 @@
 # 🎭 Cinematic Avatar Video Generator
 
-A lightweight, fully local app that generates cinematic avatar videos using an image and text prompt — no API keys, no cloud dependencies.
+## > ⚠️ This project is currently under development and intended for commercial sale.  
+> The code is shared here for review only and is not licensed for reuse or redistribution.
+
+
+### A lightweight, fully local app that generates cinematic avatar videos using an image and text prompt — no API keys, no cloud dependencies.
 
 Built with React, Flask, Coqui TTS, and SadTalker.
 
