@@ -1,7 +1,7 @@
 # 🎭 Cinematic Avatar Video Generator
 
 ## > ⚠️ This project is currently under development and intended for commercial sale.  
-> The code is shared here for review only and is not licensed for reuse or redistribution.
+> The code is shared here for review only. The contents are under full copyright protection and are not licensed for reuse or distribution.
 
 
 ### A lightweight, fully local app that generates cinematic avatar videos using an image and text prompt — no API keys, no cloud dependencies.
