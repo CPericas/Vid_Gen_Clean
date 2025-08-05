@@ -1,69 +1,128 @@
-# React + TypeScript + Vite
+# 🎭 Cinematic Avatar Video Generator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## > ⚠️ This project is currently under development and intended for commercial sale.  
+> The code is shared here for review only. The contents are under full copyright protection and are not licensed for reuse or distribution.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### A lightweight, fully local app that generates cinematic avatar videos using an image and text prompt — no API keys, no cloud dependencies.
 
-## Expanding the ESLint configuration
+Built with React, Flask, Coqui TTS, and SadTalker.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🚀 Features
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- ✅ Upload or choose an avatar
+- ✅ Type a scene prompt (1–3 sentences)
+- ✅ Choose background and music
+- ✅ Generate lip-synced video with voice
+- ✅ Download your final result
+- ✅ Fully local, no API calls
+- ✅ Toggle between Demo Mode and Full Mode
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🧠 How It Works
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. **Avatar**: Upload a PNG or JPEG image
+2. **Prompt**: User types a short script
+3. **TTS**: Coqui TTS converts text to voice
+4. **Lip Sync**: SadTalker animates avatar to match speech
+5. **Cinematic FX**: Framer Motion animates background/zoom
+6. **Music**: Royalty-free background music added
+7. **Preview**: Scene parts rendered in-browser with HTML5 & CSS
+8. **Download**: Output is downloadable in Full Mode
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+## 📁 Tech Stack
+
+| Frontend          | Backend            |  Media Processing           |
+|-------------------|--------------------|-----------------------------|
+| React + Bootstrap | Flask + Python     |  Coqui TTS + SadTalker      |
+| Framer Motion     | FFmpeg (local use) | HTML5 `<video>` composition |
+
+---
+
+## 🧪 Modes
+
+### 🟢 Full Mode
+- Runs Coqui TTS and SadTalker locally
+- Generates full video with real voice and lip sync
+
+### 🔵 Demo Mode
+- Uses pre-generated media files
+- Fast testing for UI & animation without compute load
+
+Toggle between modes in the UI.
+
+---
+
+## 📦 Setup Instructions
+
+### 🔧 Prerequisites
+- Python 3.9+
+- Node.js 16+
+- FFmpeg installed & added to PATH
+
+### 🛠️ Installation
+
+git clone https://github.com/CPericas/Vid_Gen.git
+cd Vid_Gen
+npm install
+
+cd server
+python -m venv .venv
+
+### On Windows PowerShell:
+.venv\Scripts\Activate.ps1
+
+### On Windows CMD:
+.venv\Scripts\activate.bat
+
+### On macOS/Linux:
+source .venv/bin/activate
+
+pip install -r requirements.txt
+
+## ⚙️ Full Mode Requirements & Performance Notes
+### Hardware Requirements
+Running Full Mode locally requires significant CPU and GPU resources due to heavy AI processing by Coqui TTS and SadTalker.
+Recommended: A multi-core CPU with at least 16GB RAM and a dedicated GPU will drastically reduce processing time.
+
+### Performance
+On typical laptops without a dedicated GPU, video generation can take over an hour per video.
+Demo Mode exists to provide a fast, no-wait user experience for UI testing and quick demos by using pre-generated media files.
+
+### Why Demo Mode?
+
+Avoids long processing times on less powerful machines.
+
+Allows instant previews and interaction without GPU or API dependencies.
+
+Makes the MVP accessible and marketable to buyers without expensive hardware.
+
+### For Best Results
+Buyers interested in Full Mode should consider upgrading hardware or running on cloud servers to get reasonable video generation times.
+
+## 🧾 License
+This project is released under the MIT License.
+Includes royalty-free music from FreePD.com.
+
+## 💼 Use Cases
+Indie AI video creators
+
+Short-form content tools
+
+Avatar-based storytelling
+
+Educational apps or character bots
+
+## 📬 Contact
+Created by Chris Pericas
+For acquisition or questions, reach out via GitHub or contact directly.
+
+
+
+
+
