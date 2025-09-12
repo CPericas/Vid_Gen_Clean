@@ -66,7 +66,6 @@ export default function Generate() {
           setVoiceoverSrc("http://localhost:5001/audio/output.wav");
           setLoadingStep("video");
 
-          // Fade down music volume if playing TTS voiceover
           if (musicRef.current) {
             fadeVolume(musicRef.current, 1, 0.2, 500);
           }
@@ -88,11 +87,13 @@ export default function Generate() {
 
     const generateVideo = async () => {
       try {
+        console.log("Sending avatar to backend:", avatar);
         const response = await fetch("http://localhost:5001/generate-video", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            avatar: avatar,
+            avatar: avatar,   // ✅ use selected avatar from context
+            mode: "full",
             audioPath: "output.wav",
           }),
         });
@@ -116,7 +117,7 @@ export default function Generate() {
 
   const handleRetry = () => {
     resetState();
-    window.location.reload(); // page reset fallback
+    window.location.reload();
   };
 
   return (
@@ -139,7 +140,6 @@ export default function Generate() {
               </>
             )}
 
-            {/* Error alert */}
             {error && (
               <Alert variant="danger" className="my-3">
                 {error}
@@ -148,34 +148,33 @@ export default function Generate() {
                 </div>
               </Alert>
             )}
-            {/* Final output */}
+
             {videoSrc && !error && (
-                <>
-                    <video
-                        src={videoSrc}
-                        controls
-                        autoPlay
-                        loop
-                        style={{ width: "100%", borderRadius: "10px" }}
-                    />
-                    <div className="mt-3">
-                        <Button
-                            as="a"
-                            variant="success"
-                            href={videoSrc}
-                            download
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Download Video
-                        </Button>
-                    </div>
-                </>
+              <>
+                <video
+                  src={videoSrc}
+                  controls
+                  autoPlay
+                  loop
+                  style={{ width: "100%", borderRadius: "10px" }}
+                />
+                <div className="mt-3">
+                  <Button
+                    as="a"
+                    variant="success"
+                    href={videoSrc}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Download Video
+                  </Button>
+                </div>
+              </>
             )}
           </Col>
         </Row>
 
-        {/* voiceover-only for before video is ready */}
         {!videoSrc && voiceoverSrc && !error && (
           <Row className="justify-content-center py-3">
             <Col className="text-center" md={6}>
@@ -196,7 +195,7 @@ export default function Generate() {
             </Col>
           </Row>
         )}
-        {/* Background music preview */}
+
         <Row className="justify-content-center py-5">
           <Col className="text-center" md={6}>
             {selectedMusic ? (

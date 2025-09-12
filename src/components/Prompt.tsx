@@ -12,6 +12,7 @@ export default function Prompt() {
   const { mode } = useMode();
   const navigate = useNavigate();
 
+// In demo mode, auto-fill the prompt and move to scene step
   useEffect(() => {
     if (mode === "demo" && !prompt) {
       const demoPrompt = "This is a demonstration of my awesome abilities!";
@@ -34,6 +35,8 @@ export default function Prompt() {
       >
         {mode === "full" && (
           <>
+
+          {/* Avatar preview */}
             <Row className="justify-content-center mb-4">
               <Col md={6} className="text-center">
                 {avatar ? (
@@ -50,17 +53,18 @@ export default function Prompt() {
               </Col>
             </Row>
 
+            {/* Scene prompt form */}
             <Row className="justify-content-center">
               <Col md={6}>
                 <Form onSubmit={handleSubmit}>
                   <Form.Group controlId="scenePrompt" className="mb-3">
-                    <Form.Label>Enter your scene description (1 - 3 sentences): </Form.Label>
+                    <Form.Label>Enter your script (1 - 3 sentences): </Form.Label>
                     <Form.Control 
                       as="textarea"
                       rows={4}
                       value={prompt ?? ""}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Describe the cinematic scene for your avatar..."
+                      placeholder="What should you avtar say?"
                       required
                     />
                   </Form.Group>

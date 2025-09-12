@@ -11,9 +11,6 @@ const AvatarContext = createContext<AvatarContextType | undefined>(undefined);
 export const AvatarProvider = ({ children }: { children: ReactNode}) => {
     const [avatar, setAvatar] = useState<string | null>(null);
 
-
-
-    
     return (
         <AvatarContext.Provider value={{ avatar, setAvatar }}>
             {children}

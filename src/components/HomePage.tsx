@@ -7,6 +7,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { mode, setMode } = useMode();
 
+  // Toggle between demo or full mode 
   const toggleMode = () => {
     setMode(mode === "demo" ? "full" : "demo");
   }
@@ -17,6 +18,7 @@ export default function HomePage() {
 
   return (
     <Container className="py-5">
+      {/*Hero Section */}
       <Row className="justify-content-center mb-4">
         <Col md={10} lg={8}>
           <motion.div
@@ -27,6 +29,7 @@ export default function HomePage() {
           >
             <h1 className="mb-4">Fake Cinematic Avatar Video Generator</h1>
 
+{/* Toggle between modes*/}
             <Form.Check
               type="switch"
               id="mode-switch"
@@ -37,7 +40,7 @@ export default function HomePage() {
             />
 
             <div className="mb-3">
-              {/* Placeholder for demo video */}
+              {/* Demo video */}
               <div className="ratio ratio-16x9 border rounded shadow-sm">
                 <video controls>
                   <source src="/demo.mp4" type="video/mp4" />
@@ -45,6 +48,8 @@ export default function HomePage() {
                 </video>
               </div>
             </div>
+
+            {/* CTA #1 */}
             <Button variant="primary" size="lg" onClick={handleStart}>
               Try It Now
             </Button>
@@ -52,6 +57,7 @@ export default function HomePage() {
         </Col>
       </Row>
 
+{/* How it works Section */}
       <Row className="justify-content-center mt-5">
         <Col md={10} lg={8}>
           <motion.div
@@ -73,6 +79,7 @@ export default function HomePage() {
             </ul>
           </motion.div>
 
+{/* CTA #2 */}
           <div className="text-center mt-4">
             <Button variant="success" size="lg" onClick={handleStart}>
               Get Started Now

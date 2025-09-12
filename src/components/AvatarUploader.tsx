@@ -19,19 +19,20 @@ export default function AvatarUploader() {
   const { mode } = useMode();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // In demo mode, auto select avatar and navigate
-    if (mode === "demo" && !selectedAvatar) {
-      const demoAvatar = "/avatars/Avatar1.png";
-      setSelectedAvatar(demoAvatar);
-      setAvatar(demoAvatar);
-      navigate("/prompt")
-    }
-    // Logging of selection for dev purposes. Can be removed in production
-    if (selectedAvatar) {
+useEffect(() => {
+  // In demo mode, auto select avatar and continue
+  if (mode === "demo" && !selectedAvatar) {
+    const demoAvatar = "/avatars/Avatar1.png";
+    setSelectedAvatar(demoAvatar);
+    setAvatar(demoAvatar);
+    navigate("/prompt"); // continue flow immediately
+  }
+
+  // Optional: log selection for dev purposes
+  if (selectedAvatar) {
     console.log("Selected avatar:", selectedAvatar);
-    }
-  }, [mode, selectedAvatar, setAvatar, navigate]);
+  }
+}, [mode, selectedAvatar, setAvatar, navigate]);
 
   // Upload image and send to backend
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,11 +62,34 @@ export default function AvatarUploader() {
   };
 
   // selecting a pre loaded avatar
-  const handleGallerySelect = (url: string) => {
-    setSelectedAvatar(url);
-    setAvatar(url);
-    navigate("/prompt");
+  const handleGallerySelect = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const file = new File([blob], "preloaded_avatar.png", { type: blob.type });
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const res = await fetch("http://localhost:5001/upload-avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.path) {
+        setSelectedAvatar(data.path);
+        setAvatar(data.path);
+        navigate("/prompt");
+      } else {
+        console.error("Preloaded avatar background removal failed");
+      }
+    } catch (err) {
+      console.error("Error processing preloaded avatar: ", err);
+    }
   };
+
 
   return (
     <Container className="py-5">
