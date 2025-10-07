@@ -4,18 +4,40 @@ import { useNavigate } from "react-router-dom";
 import { usePrompt } from "../context/PromptContext";
 import { useAvatar } from "../context/AvatarContext";
 import { useSceneSettings } from "../context/SceneSettingsContext";
+import { useEffect, useState } from "react";
 
 export default function Preview() {
     const { avatar } = useAvatar();
     const { prompt } = usePrompt();
     const navigate = useNavigate();
     const { selectedBackground, selectedMusic } = useSceneSettings();
-    
+
+    const [resolvedAvatarSrc, setResolvedAvatarSrc] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!avatar) {
+            setResolvedAvatarSrc(null);
+            return;
+        }
+
+        // If already absolute URL, just use it
+        if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+            setResolvedAvatarSrc(avatar);
+            return;
+        }
+
+        // Try Flask path first
+        const flaskUrl = `http://localhost:5001${avatar}`;
+        const img = new Image();
+        img.onload = () => setResolvedAvatarSrc(flaskUrl);
+        img.onerror = () => setResolvedAvatarSrc(avatar); // fallback to frontend /public
+        img.src = flaskUrl;
+    }, [avatar]);
 
     return (
         <Container className="py-5">
             <motion.div
-                initial={{ opacity: 0, y:20 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
@@ -23,24 +45,22 @@ export default function Preview() {
                 {/* Avatar preview */}
                 <Row className="justify-content-center mb-4">
                     <Col md={6} className="text-center">
-                        {avatar ? (
+                        {resolvedAvatarSrc ? (
                             <motion.img
-                                src={avatar}
+                                src={resolvedAvatarSrc}
                                 alt="Selected Avatar"
                                 className="img-fluid rounded"
                                 style={{ maxHeight: "500px" }}
                                 animate={{ y: [0, -10, 0], scale: [1, 1.02, 1] }}
                                 transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                             />
-
-
-                        ): (
+                        ) : (
                             <p>No avatar selected</p>
                         )}
                     </Col>
                 </Row>
 
-{/* Background preview with pan animation */}
+                {/* Background preview with pan animation */}
                 <Row className="justify-content-center py-5">
                     <Col md={6} className="text-center">
                         {selectedBackground ? (
@@ -75,7 +95,7 @@ export default function Preview() {
                     </Col>
                 </Row>
 
-                { /* Background music player */}
+                {/* Background music player */}
                 <Row className="justify-content-center py-5">
                     <Col className="text-center" md={6}>
                         {selectedMusic ? (
@@ -111,7 +131,7 @@ export default function Preview() {
                 </Row>
 
                 <Row className="justify-content-center">
-                    <Col md={6}  className="text-center">
+                    <Col md={6} className="text-center">
                         <Button
                             variant="primary"
                             size="lg"

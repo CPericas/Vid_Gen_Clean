@@ -188,8 +188,12 @@ server/results/
 *.pt
 
 # SadTalker / GFPGAN / other model repos if you cloned them
-server/SadTalker/
 server/gfpgan/
+server/SadTalker/checkpoints/
+server/SadTalker/config/
+server/SadTalker/src/**/*.pth
+server/SadTalker/src/**/*.pth.tar
+server/SadTalker/src/**/*.safetensors
 
 # VS Code settings
 .vscode/

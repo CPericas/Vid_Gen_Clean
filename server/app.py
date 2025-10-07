@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from rembg import remove
 from PIL import Image
-import os, sys, logging, traceback, shutil
+import os, sys, logging, traceback, shutil, subprocess
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SADTALKER_DIR = os.path.join(BASE_DIR, "SadTalker", "src")
@@ -78,15 +78,20 @@ def upload_avatar():
         logging.error("Upload avatar failed: Empty filename")
         return jsonify({"success": False, "error": "Empty filename"}), 400
 
+    # Save the original file
     filename = secure_filename(file.filename)
     filepath = os.path.join(AVATAR_FOLDER, filename)
     file.save(filepath)
     print(f"[UPLOAD] Avatar saved to {filepath}")
 
     try:
-        transparent_filename = f"transparent_{filename}"
+        # Always save the processed file as .png (supports RGBA)
+        base, _ = os.path.splitext(filename)
+        transparent_filename = f"transparent_{base}.png"
         transparent_path = os.path.join(AVATAR_FOLDER, transparent_filename)
+
         remove_avatar_background(filepath, transparent_path)
+
         return jsonify({"success": True, "path": f"/avatars/{transparent_filename}"})
     except Exception as e:
         logging.error(f"Background removal failed: {str(e)}\n{traceback.format_exc()}")
@@ -141,7 +146,7 @@ def serve_audio(filename):
     print(f"[ROUTE] Serving audio: {filename}")
     return send_from_directory(OUTPUT_FOLDER, filename)
 
-# === Updated generate-video route ===
+# === Updated generate-video route with overlay + music mix ===
 @app.route("/generate-video", methods=["POST"])
 def generate_video():
     print("[ROUTE] /generate-video called")
@@ -171,16 +176,11 @@ def generate_video():
         if not avatar_filename:
             return jsonify({"success": False, "error": "No avatar filename provided"}), 400
 
-        # Strip leading /avatars/ from frontend path
         avatar_rel = avatar_filename.replace("/avatars/", "")
 
-        # Uploaded avatars go to server/output/avatars
         uploaded_avatar_path = os.path.join(AVATAR_FOLDER, avatar_rel)
-
-        # Preloaded avatars live in frontend's public/avatars (one dir above server/)
         preloaded_avatar_path = os.path.join(os.path.dirname(BASE_DIR), "public", "avatars", avatar_rel)
 
-        # Determine which source exists
         if os.path.exists(uploaded_avatar_path):
             source_path = uploaded_avatar_path
             print(f"[DEBUG] Using uploaded avatar: {source_path}")
@@ -188,10 +188,9 @@ def generate_video():
             source_path = preloaded_avatar_path
             print(f"[DEBUG] Using preloaded avatar: {source_path}")
         else:
-            logging.error(f"Avatar file not found: {avatar_rel}")
             return jsonify({"success": False, "error": f"Avatar not found: {avatar_rel}"}), 404
 
-        # Generate transparent avatar if it doesn't exist
+        # ensure a transparent PNG exists (created earlier by remove_avatar_background)
         transparent_filename = f"transparent_{avatar_rel}"
         transparent_path = os.path.join(AVATAR_FOLDER, transparent_filename)
         if not os.path.exists(transparent_path):
@@ -200,7 +199,6 @@ def generate_video():
         else:
             print(f"[BG-REMOVE] Transparent avatar already exists: {transparent_filename}")
 
-        # Use transparent avatar for SadTalker
         avatar_full = transparent_path
         print(f"[DEBUG] Avatar to use for SadTalker: {avatar_full}")
 
@@ -209,7 +207,7 @@ def generate_video():
         if not os.path.exists(audio_path):
             return jsonify({"success": False, "error": "Audio file not found"}), 404
 
-        # Run SadTalker
+        # Run SadTalker -> produces a video (usually in results/<uuid>/transparent_<name>__output.mp4)
         print("[SADTALKER] Running test()...")
         video_path = sadtalker.test(
             source_image=avatar_full,
@@ -220,15 +218,100 @@ def generate_video():
             batch_size=1,
             size=256
         )
+        video_path = os.path.abspath(video_path)
         print(f"[SADTALKER] Video generated at {video_path}")
 
-        # Demo mode
-        if mode == "demo":
-            demo_video_path = os.path.join("public", "demo.mp4")
-            shutil.copy(video_path, demo_video_path)
-            return jsonify({"success": True, "video_path": "/demo.mp4"})
+        # Prepare final composite
+        final_path = os.path.join(OUTPUT_FOLDER, "final_video.mp4")
+        background_path = os.path.join(OUTPUT_FOLDER, "background.png")
+        music_path = os.path.join(OUTPUT_FOLDER, "music.mp3")
 
-        return jsonify({"success": True, "video_path": video_path})
+        if not (os.path.exists(background_path) and os.path.exists(music_path)):
+            print("[WARN] Missing background.png or music.mp3, returning raw SadTalker video")
+            return jsonify({"success": True, "video_path": video_path})
+
+        # avatar_full is the transparent PNG produced earlier (output/avatars/transparent_*.png)
+        avatar_png = os.path.abspath(avatar_full)
+        if not os.path.exists(avatar_png):
+            print(f"[ERROR] Transparent PNG not found at {avatar_png}; falling back to simple overlay without feather.")
+            # fallback simple overlay using the SadTalker video directly
+            ffmpeg_cmd = [
+                "ffmpeg", "-y",
+                "-i", background_path,
+                "-i", video_path,
+                "-i", music_path,
+                "-filter_complex",
+                (
+                    "[1:v]scale=550:-1[avatar];"
+                    "[2:a]volume=0.3[music];"
+                    "[0:v][avatar]overlay=(W-w)/2:H-h-200[vout];"
+                    "[1:a][music]amix=inputs=2:duration=first:dropout_transition=2[aout]"
+                ),
+                "-map", "[vout]",
+                "-map", "[aout]",
+                "-c:v", "libx264",
+                "-crf", "18",
+                "-preset", "veryfast",
+                "-c:a", "aac",
+                "-shortest",
+                final_path
+            ]
+            print("[FFMPEG] Running fallback overlay (no feather)...")
+            subprocess.run(ffmpeg_cmd, check=True)
+            print(f"[FFMPEG] Final video ready at {final_path}")
+            return jsonify({"success": True, "video_path": f"/video/{os.path.basename(final_path)}"})
+
+        # ---- MAIN: use PNG mask + SadTalker video to produce feathered avatar ----
+        # Inputs order: [0]=background, [1]=video, [2]=avatar_png, [3]=music
+        ffmpeg_cmd = [
+            "ffmpeg", "-y",
+            "-i", background_path,    # 0
+            "-i", video_path,         # 1
+            "-i", avatar_png,         # 2 (transparent PNG created by remove_avatar_background)
+            "-i", music_path,         # 3
+            "-filter_complex",
+            (
+                # scale the SadTalker rendered frames (video) and make RGBA
+                "[1:v]scale=550:-1,format=rgba[vid_rgba];"
+                # scale the source PNG to exactly the same size and keep RGBA
+                "[2:v]scale=550:-1,format=rgba[png_rgba];"
+                # extract alpha from the scaled PNG and blur it (feather)
+                "[png_rgba]alphaextract,boxblur=12:12[mask_blurred];"
+                # alphamerge: put the blurred mask into the scaled video -> avatar with soft edges
+                "[vid_rgba][mask_blurred]alphamerge[avatar_soft];"
+                # lower music volume
+                "[3:a]volume=0.28[music];"
+                # overlay softened avatar onto the background (centered, slightly above bottom)
+                "[0:v][avatar_soft]overlay=x=(W-w)/2:y=H-h-150:format=yuv420[vout];"
+                # mix SadTalker audio (from input 1) with the lowered music
+                "[1:a][music]amix=inputs=2:duration=first:dropout_transition=2[aout]"
+            ),
+            "-map", "[vout]",
+            "-map", "[aout]",
+            "-c:v", "libx264",
+            "-crf", "18",
+            "-preset", "veryfast",
+            "-c:a", "aac",
+            "-shortest",
+            final_path
+        ]
+
+        print("[FFMPEG] Running composite (mask-based feathering)...")
+        # capture output to help debugging if ffmpeg fails
+        try:
+            proc = subprocess.run(ffmpeg_cmd, check=True, capture_output=True, text=True)
+            print(proc.stdout)
+            print(proc.stderr)
+        except subprocess.CalledProcessError as e:
+            print("[FFMPEG-ERROR] ffmpeg failed:")
+            print(e.stdout if hasattr(e, "stdout") else "")
+            print(e.stderr if hasattr(e, "stderr") else "")
+            raise
+
+        print(f"[DEBUG] Background path in use: {background_path}")
+        print(f"[DEBUG] Music path in use: {music_path}")
+        print(f"[FFMPEG] Final video ready at {final_path}")
+        return jsonify({"success": True, "video_path": f"/video/{os.path.basename(final_path)}"})
 
     except Exception as e:
         logging.error(f"Video generation failed: {str(e)}\n{traceback.format_exc()}")
@@ -237,29 +320,46 @@ def generate_video():
 
 @app.route("/select-scene-assets", methods=["POST"])
 def select_scene_assets():
-    print("[ROUTE] /select-scene-assets called")
     try:
         data = request.get_json()
         selected_background = data.get("background")
         selected_music = data.get("music")
+
         if not selected_background or not selected_music:
             return jsonify({"success": False, "error": "Background or music not provided"}), 400
 
-        bg_src = os.path.join(os.getcwd(), "public", "backgrounds", selected_background)
+        # Normalize filenames (strip any leading paths)
+        bg_name = os.path.basename(selected_background)
+        music_name = os.path.basename(selected_music)
+
+        # Correct source paths (go up one directory from /server to /Vid_Gen/public)
+        bg_src = os.path.join(os.getcwd(), "..", "public", "backgrounds", bg_name)
+        music_src = os.path.join(os.getcwd(), "..", "public", "music", music_name)
         bg_dest = os.path.join(OUTPUT_FOLDER, "background.png")
-        music_src = os.path.join(os.getcwd(), "public", "music", selected_music)
         music_dest = os.path.join(OUTPUT_FOLDER, "music.mp3")
+
+        # Debug confirmation
+        print(f"[DEBUG] Background source: {bg_src}")
+        print(f"[DEBUG] Music source: {music_src}")
+        print(f"[DEBUG] Destination folder: {OUTPUT_FOLDER}")
+
+        # Clear old files before copying
+        for f in [bg_dest, music_dest]:
+            if os.path.exists(f):
+                os.remove(f)
 
         shutil.copy(bg_src, bg_dest)
         shutil.copy(music_src, music_dest)
+
+        print(f"[ASSETS] Copied {bg_name} and {music_name} to output/")
         return jsonify({"success": True, "message": "Scene assets copied successfully."})
+
     except Exception as e:
-        logging.error(f"Error copying scene assets: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({"success": False, "error": "Failed to copy scene assets"}), 500
+        logging.error(f"Scene asset selection failed: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": "Scene asset selection failed"}), 500
 
 @app.route("/process-preloaded-avatar", methods=["POST"])
 def process_preloaded_avatar():
-    print("[ROUTE] /process-preloaded-avatar called")
     try:
         data = request.get_json()
         relative_path = data.get("path")
@@ -279,15 +379,22 @@ def process_preloaded_avatar():
     except Exception as e:
         logging.error(f"Error processing preloaded avatar: {str(e)}\n{traceback.format_exc()}")
         return jsonify({"success": False, "error": "Failed to process preloaded avatar"}), 500
-    
+
 @app.route("/video/<filename>")
 def serve_video(filename):
     print(f"[ROUTE] Serving video: {filename}")
-    return send_from_directory(OUTPUT_FOLDER, filename)
-   
+    return send_from_directory("output", filename, mimetype="video/mp4")
+
+@app.route("/download-video")
+def download_video():
+    return send_file(
+        os.path.join("output", "final_video.mp4"),   # FIXED: use final_video.mp4 directly
+        mimetype="video/mp4",
+        as_attachment=True,
+        download_name="avatar_scene.mp4"
+    )
 
 # === Run Flask Server ===
 if __name__ == "__main__":
-    print("[MAIN] Running Flask server on port 5001...")
     app.run(port=5001, debug=False, use_reloader=False)
 

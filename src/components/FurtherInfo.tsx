@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +16,7 @@ const preloadedBackgrounds = [
 ];
 
 const musicOptions = [
-    { label: "Fresh Focus", url: "/music/Fresh Focus.mp3"},
+    { label: "Fresh Focus", url: "/music/Fresh Focus.mp3" },
     { label: "Fright Night Twist", url: "/music/Fright Night Twist.mp3" },
     { label: "Monsters in Hotel", url: "/music/Monsters in Hotel.mp3" },
     { label: "New Hero in Town", url: "/music/New Hero in Town.mp3" },
@@ -35,21 +35,55 @@ export default function FurtherInfo() {
         setSelectedMusic,
     } = useSceneSettings();
 
-// auto selection for demo mode
-    useEffect(() => {
-        if (mode === "demo" && !selectedBackground && !selectedMusic ) {
-          const demoBackground = "/backgrounds/background1.png";
-          const demoMusic = "/music/Fresh Focus.mp3";
-          setSelectedBackground(demoBackground);
-          setSelectedMusic(demoMusic);
-          navigate("/preview")
-        }
-      }, [mode, selectedBackground, selectedMusic, setSelectedBackground, setSelectedMusic, navigate]);
+    const [resolvedAvatarSrc, setResolvedAvatarSrc] = useState<string | null>(null);
 
-    const handleContinue = () => {
-        if (selectedBackground && selectedMusic) {
-        navigate("/preview");
+    // Resolve avatar path for demo vs Flask
+    useEffect(() => {
+        if (!avatar) {
+            setResolvedAvatarSrc(null);
+            return;
         }
+
+        if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+            setResolvedAvatarSrc(avatar);
+            return;
+        }
+
+        const flaskUrl = `http://localhost:5001${avatar}`;
+        const img = new Image();
+        img.onload = () => setResolvedAvatarSrc(flaskUrl);
+        img.onerror = () => setResolvedAvatarSrc(avatar); // fallback to public/avatars
+        img.src = flaskUrl;
+    }, [avatar]);
+
+    // auto selection for demo mode
+    useEffect(() => {
+        if (mode === "demo" && !selectedBackground && !selectedMusic) {
+            const demoBackground = "/backgrounds/background1.png";
+            const demoMusic = "/music/Fresh Focus.mp3";
+            setSelectedBackground(demoBackground);
+            setSelectedMusic(demoMusic);
+            navigate("/preview");
+        }
+    }, [mode, selectedBackground, selectedMusic, setSelectedBackground, setSelectedMusic, navigate]);
+
+    const handleContinue = async () => {
+    if (!selectedBackground || !selectedMusic) return;
+
+    try {
+        await fetch("http://localhost:5001/select-scene-assets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            background: selectedBackground,
+            music: selectedMusic,
+        }),
+        });
+        navigate("/preview");
+    } catch (err) {
+        console.error("Failed to send scene assets:", err);
+        navigate("/preview");
+    }
     };
 
     return (
@@ -72,11 +106,11 @@ export default function FurtherInfo() {
                         </Row>
 
                         {/* Avatar preview */}
-                        {avatar && (
+                        {resolvedAvatarSrc && (
                             <Row className="justify-content-center mb-4">
                                 <Col md={4} className="text-center">
                                     <img
-                                        src={avatar}
+                                        src={resolvedAvatarSrc}
                                         alt="Selected Avatar"
                                         className="img-fluid rounded"
                                         style={{ maxHeight: "250px" }}
@@ -152,13 +186,13 @@ export default function FurtherInfo() {
                                 </div>
                             </Col>
                         </Row>
-                        
+
                         <Row className="justify-content-center">
-                            <Col md={6}  className="text-center">
+                            <Col md={6} className="text-center">
                                 <Button
                                     variant="primary"
                                     size="lg"
-                                    disabled={!selectedBackground || !selectedMusic }
+                                    disabled={!selectedBackground || !selectedMusic}
                                     onClick={handleContinue}
                                 >
                                     Continue
@@ -167,7 +201,6 @@ export default function FurtherInfo() {
                         </Row>
                     </>
                 )}
-
             </motion.div>
         </Container>
     );

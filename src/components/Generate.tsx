@@ -100,8 +100,8 @@ export default function Generate() {
 
         const data = await response.json();
 
-        if (response.ok && data.success) {
-          setVideoSrc("http://localhost:5001/video/output.mp4");
+        if (response.ok && data.success && data.video_path) {
+          setVideoSrc(`http://localhost:5001${data.video_path}`);
           setLoadingStep(null);
         } else {
           throw new Error(data.error || "Video generation failed");
@@ -162,10 +162,8 @@ export default function Generate() {
                   <Button
                     as="a"
                     variant="success"
-                    href={videoSrc}
+                    href="http://localhost:5001/download-video"
                     download
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     Download Video
                   </Button>
