@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import { usePrompt } from "../context/PromptContext";
 import { useAvatar } from "../context/AvatarContext";
 import { useSceneSettings } from "../context/SceneSettingsContext";
+import { useMode } from "../context/ModeContext";
 
 export default function Generate() {
   const { prompt } = usePrompt();
   const { avatar } = useAvatar();
   const { selectedMusic } = useSceneSettings();
+  const { mode } = useMode();
 
   const [voiceoverSrc, setVoiceoverSrc] = useState<string | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
@@ -45,9 +47,18 @@ export default function Generate() {
     setVideoSrc(null);
   };
 
-  // Generate TTS voiceover 
+  // 🧩 Handle Demo Mode immediately — skip backend calls entirely
   useEffect(() => {
-    if (!prompt) return;
+    if (mode === "demo") {
+      console.log("[DEMO MODE] Using pre-rendered sample video only.");
+      resetState();
+      setVideoSrc("/videos/Demo_Video.mp4");
+    }
+  }, [mode]);
+
+  // 🗣️ Generate TTS voiceover — only if NOT demo mode
+  useEffect(() => {
+    if (mode === "demo" || !prompt) return;
 
     resetState();
     setLoadingStep("tts");
@@ -66,9 +77,7 @@ export default function Generate() {
           setVoiceoverSrc("http://localhost:5001/audio/output.wav");
           setLoadingStep("video");
 
-          if (musicRef.current) {
-            fadeVolume(musicRef.current, 1, 0.2, 500);
-          }
+          if (musicRef.current) fadeVolume(musicRef.current, 1, 0.2, 500);
         } else {
           throw new Error(data.error || "TTS generation failed");
         }
@@ -79,11 +88,11 @@ export default function Generate() {
     };
 
     generateTTSAudio();
-  }, [prompt]);
+  }, [prompt, mode]);
 
-  // Generate lip synced video
+  // 🎞️ Generate lip-synced video — only if NOT demo mode
   useEffect(() => {
-    if (!voiceoverSrc || !avatar) return;
+    if (mode === "demo" || !voiceoverSrc || !avatar) return;
 
     const generateVideo = async () => {
       try {
@@ -92,7 +101,7 @@ export default function Generate() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            avatar: avatar,   // ✅ use selected avatar from context
+            avatar: avatar,
             mode: "full",
             audioPath: "output.wav",
           }),
@@ -113,7 +122,7 @@ export default function Generate() {
     };
 
     generateVideo();
-  }, [voiceoverSrc, avatar]);
+  }, [voiceoverSrc, avatar, mode]);
 
   const handleRetry = () => {
     resetState();
@@ -129,6 +138,12 @@ export default function Generate() {
       >
         <Row className="justify-content-center py-5">
           <Col md={8} className="text-center">
+            {mode === "demo" && (
+              <Alert variant="info" className="mb-4">
+                <strong>Demo Mode:</strong> Showing pre-rendered video sample.
+              </Alert>
+            )}
+
             {loadingStep && (
               <>
                 <Spinner animation="border" variant="primary" />
@@ -158,16 +173,18 @@ export default function Generate() {
                   loop
                   style={{ width: "100%", borderRadius: "10px" }}
                 />
-                <div className="mt-3">
-                  <Button
-                    as="a"
-                    variant="success"
-                    href="http://localhost:5001/download-video"
-                    download
-                  >
-                    Download Video
-                  </Button>
-                </div>
+                {mode !== "demo" && (
+                  <div className="mt-3">
+                    <Button
+                      as="a"
+                      variant="success"
+                      href="http://localhost:5001/download-video"
+                      download
+                    >
+                      Download Video
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </Col>
@@ -182,9 +199,7 @@ export default function Generate() {
                 preload="auto"
                 style={{ width: "100%" }}
                 onEnded={() => {
-                  if (musicRef.current) {
-                    fadeVolume(musicRef.current, 0.2, 1, 500);
-                  }
+                  if (musicRef.current) fadeVolume(musicRef.current, 0.2, 1, 500);
                 }}
               >
                 <source src={voiceoverSrc} type="audio/wav" />
@@ -215,3 +230,4 @@ export default function Generate() {
     </Container>
   );
 }
+

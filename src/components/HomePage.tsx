@@ -43,7 +43,7 @@ export default function HomePage() {
               {/* Demo video */}
               <div className="ratio ratio-16x9 border rounded shadow-sm">
                 <video controls>
-                  <source src="/demo.mp4" type="video/mp4" />
+                  <source src="/videos/Opening_Video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
@@ -73,8 +73,8 @@ export default function HomePage() {
               <li>🎭 Avatar Upload or Selection</li>
               <li>🗣️ Text-to-Speech Voiceover</li>
               <li>🎬 AI Lip Sync</li>
-              <li>📽️ Backgrounds + Cinematic Movement</li>
-              <li>🎼 Subtitles + Background Music</li>
+              <li>📽️ Backgrounds + Cinematic Movement in preview</li>
+              <li>🎼 Background Music</li>
               <li>🔄 Preview or Pre-rendered Download</li>
             </ul>
           </motion.div>

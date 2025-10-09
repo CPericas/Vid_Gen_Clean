@@ -15,7 +15,7 @@ export default function Prompt() {
 // In demo mode, auto-fill the prompt and move to scene step
   useEffect(() => {
     if (mode === "demo" && !prompt) {
-      const demoPrompt = "This is a demonstration of my awesome abilities!";
+      const demoPrompt = "This is an entry level AI generator application. There is no API, no GPU needed. It is free and local.";
       setPrompt(demoPrompt);
       navigate("/scene")
     }

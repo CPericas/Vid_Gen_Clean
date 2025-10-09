@@ -22,7 +22,7 @@ export default function AvatarUploader() {
 useEffect(() => {
   // In demo mode, auto select avatar and continue
   if (mode === "demo" && !selectedAvatar) {
-    const demoAvatar = "/avatars/Avatar1.png";
+    const demoAvatar = "/avatars/Avatar3.png";
     setSelectedAvatar(demoAvatar);
     setAvatar(demoAvatar);
     navigate("/prompt"); // continue flow immediately
