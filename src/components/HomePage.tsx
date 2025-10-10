@@ -84,9 +84,9 @@ export default function HomePage() {
           </motion.div>
 
           <Row className="text-center mt-4">
-            <Col sm={4}><img src="/public/pics/Avatar-Upload.png" className="img-fluid rounded shadow-sm" /></Col>
-            <Col sm={4}><img src="/public/pics/prompt.png" className="img-fluid rounded shadow-sm" /></Col>
-            <Col sm={4}><img src="/public/pics/Scene_Selector.png" className="img-fluid rounded shadow-sm" /></Col>
+            <Col sm={4}><img src="/pics/Avatar-Upload.png" className="img-fluid rounded shadow-sm" /></Col>
+            <Col sm={4}><img src="/pics/prompt.png" className="img-fluid rounded shadow-sm" /></Col>
+            <Col sm={4}><img src="/pics/Scene_Selector.png" className="img-fluid rounded shadow-sm" /></Col>
           </Row>
 
 
