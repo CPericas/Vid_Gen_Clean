@@ -27,7 +27,10 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="mb-4">Fake Cinematic Avatar Video Generator</h1>
+            <h1 className="mb-4">AI Video Generator SaaS Starter Kit  </h1>
+            <h2 className="mb-4">Local-Only, No API Costs.</h2>
+            <p className="lead">Fully working MVP built with React + Coqui TTS + SadTalker + FFmpeg.
+              Generate cinematic talking avatar videos from text prompts — all locally.</p>
 
 {/* Toggle between modes*/}
             <Form.Check
@@ -66,8 +69,9 @@ export default function HomePage() {
             transition={{ delay: 0.3 }}
           >
             <h2>How It Works</h2>
-            <p className="lead">
-              Upload or choose an avatar, enter a short scene description, and generate a cinematic video with synced lip movement, voiceover, subtitles, and music. All with no cloud GPU or API costs.
+            <p className="lead">Build your own AI avatar video platform — ready to brand, run locally, and sell.</p>
+            <p>
+              Upload or choose an avatar, enter a short scene description, and generate a cinematic video with a background, synced lip movement, voiceover, and music. All with no cloud GPU or API costs.
             </p>
             <ul>
               <li>🎭 Avatar Upload or Selection</li>
@@ -79,6 +83,15 @@ export default function HomePage() {
             </ul>
           </motion.div>
 
+          <Row className="text-center mt-4">
+            <Col sm={4}><img src="/public/pics/Avatar-Upload.png" className="img-fluid rounded shadow-sm" /></Col>
+            <Col sm={4}><img src="/public/pics/prompt.png" className="img-fluid rounded shadow-sm" /></Col>
+            <Col sm={4}><img src="/public/pics/Scene_Selector.png" className="img-fluid rounded shadow-sm" /></Col>
+          </Row>
+
+
+
+
 {/* CTA #2 */}
           <div className="text-center mt-4">
             <Button variant="success" size="lg" onClick={handleStart}>
@@ -87,6 +100,10 @@ export default function HomePage() {
           </div>
         </Col>
       </Row>
+
+      <footer className="text-center text-muted mt-5">
+        <small>© 2025 AI Video Generator MVP — Built by Chris Pericas</small>
+      </footer>
     </Container>
   );
 }
